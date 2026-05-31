@@ -8,9 +8,6 @@ export default function DashboardPage() {
           <h1 className="text-xl font-bold tracking-tight text-gray-800">
             AI Bill Analyzer
           </h1>
-          <span className="text-xs px-3 py-1 bg-blue-100 text-blue-700 rounded-full font-medium tracking-wide">
-            Phase 1
-          </span>
         </div>
       </header>
 

@@ -3,26 +3,26 @@ import { TelecomBillData } from "./schema";
 export const MOCK_BILL_DATA: TelecomBillData = {
   providerDetails: {
     name: "Bharti Airtel Limited",
-    gstNumber: "29AAACB2894G1ZJ"
+    gstNumber: "29AAACB0000G1ZJ",
   },
   customerInfo: {
-    name: "Shri Renghanath Shanmugaraj",
-    accountNumber: "20003426626",
-    email: "rengha93@gmail.com",
-    phone: "9791733762"
+    name: "John Doe",
+    accountNumber: "123456890",
+    email: "john.doe@gmail.com",
+    phone: "9876543210",
   },
   billingMetadata: {
-    billNumber: "HF26291004794219",
+    billNumber: "HF26291009876543",
     billDate: "12 Aug 2025",
     dueDate: "22 Aug 2025",
     billingPeriod: {
-      start: "11 Jul 2025",
-      end: "10 Aug 2025"
-    }
+      start: "11 April 2026",
+      end: "10 May 2026",
+    },
   },
   planDetails: {
     planName: "999 WiFi_200Mbps",
-    speed: "200 Mbps"
+    speed: "200 Mbps",
   },
   financialSummary: {
     previousBalance: 1178.82,
@@ -30,8 +30,8 @@ export const MOCK_BILL_DATA: TelecomBillData = {
     currentCharges: {
       rental: 999.0,
       taxes: 179.82,
-      otherCharges: 0.0
+      otherCharges: 0.0,
     },
-    totalAmountDue: 1178.82
-  }
+    totalAmountDue: 1178.82,
+  },
 };
