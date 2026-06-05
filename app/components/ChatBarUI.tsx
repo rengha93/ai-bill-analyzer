@@ -4,6 +4,7 @@ import { useChat } from "@ai-sdk/react";
 import { DefaultChatTransport } from "ai";
 import { useEffect, useRef, useState } from "react";
 import { AlertCircle, RotateCcw, FileText, CheckCircle } from "lucide-react";
+import ReactMarkdown from "react-markdown";
 
 interface BillItem {
   billId: string;
@@ -19,17 +20,20 @@ interface ChatBarUIProps {
 export default function ChatBarUI({ bills, onReset }: ChatBarUIProps) {
   const [localInput, setLocalInput] = useState<string>("");
 
-  const suggestions = bills.length > 1 ? [
-    "Compare charges across all my bills",
-    "Which month had the highest bill?",
-    "Have my charges increased over time?",
-    "Show all late payment charges mentioned",
-  ] : [
-    "What is my total amount due?",
-    "When is my payment due?",
-    "Break down my charges",
-    "Are there any late fee charges?",
-  ];
+  const suggestions =
+    bills.length > 1
+      ? [
+          "Compare charges across all my bills",
+          "Which month had the highest bill?",
+          "Have my charges increased over time?",
+          "Show all late payment charges mentioned",
+        ]
+      : [
+          "What is my total amount due?",
+          "When is my payment due?",
+          "Break down my charges",
+          "Are there any late fee charges?",
+        ];
 
   const { messages, sendMessage, status, error, regenerate } = useChat({
     transport: new DefaultChatTransport({
@@ -53,6 +57,7 @@ export default function ChatBarUI({ bills, onReset }: ChatBarUIProps) {
   const handleCustomSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     handleSubmit(localInput);
+    setLocalInput("");
   };
 
   const handleSuggestionClick = (suggestion: string) => {
@@ -63,7 +68,6 @@ export default function ChatBarUI({ bills, onReset }: ChatBarUIProps) {
     <div className="flex flex-col h-full">
       {/* Messages Area */}
       <div className="flex-1 overflow-y-auto px-4 py-6 space-y-4">
-
         {/* Bill list header */}
         <div className="flex justify-end">
           <div className="max-w-[85%] bg-slate-900 text-white rounded-2xl rounded-br-none px-5 py-4 text-sm shadow-sm">
@@ -83,10 +87,12 @@ export default function ChatBarUI({ bills, onReset }: ChatBarUIProps) {
               </button>
             </div>
             <div className="border-t border-slate-700 pt-3 flex flex-col gap-2">
-              {bills.map(bill => (
+              {bills.map((bill) => (
                 <div key={bill.billId} className="flex items-center gap-2">
                   <FileText className="w-3 h-3 text-slate-400" />
-                  <span className="text-slate-300 text-xs truncate">{bill.fileName}</span>
+                  <span className="text-slate-300 text-xs truncate">
+                    {bill.fileName}
+                  </span>
                   <CheckCircle className="w-3 h-3 text-green-400 shrink-0 ml-auto" />
                 </div>
               ))}
@@ -97,7 +103,9 @@ export default function ChatBarUI({ bills, onReset }: ChatBarUIProps) {
         {/* Suggested prompts */}
         {messages.length === 0 && (
           <div className="flex flex-col gap-3">
-            <p className="text-xs text-slate-400 text-center">Suggested questions</p>
+            <p className="text-xs text-slate-400 text-center">
+              Suggested questions
+            </p>
             <div className="flex flex-wrap gap-2 justify-center">
               {suggestions.map((s, i) => (
                 <button
@@ -127,7 +135,14 @@ export default function ChatBarUI({ bills, onReset }: ChatBarUIProps) {
               }`}
             >
               {m.parts?.map((part, i) =>
-                part.type === "text" ? <span key={i}>{part.text}</span> : null
+                part.type === "text" ? (
+                  <div
+                    key={i}
+                    className="prose prose-sm max-w-none prose-p:my-1 prose-ul:my-1 prose-li:my-0"
+                  >
+                    <ReactMarkdown>{part.text}</ReactMarkdown>
+                  </div>
+                ) : null,
               )}
             </div>
           </div>
@@ -156,7 +171,10 @@ export default function ChatBarUI({ bills, onReset }: ChatBarUIProps) {
             <AlertCircle className="w-4 h-4 shrink-0" />
             <span>Something went wrong. Please try again.</span>
           </div>
-          <button onClick={() => regenerate()} className="text-red-600 underline text-xs shrink-0">
+          <button
+            onClick={() => regenerate()}
+            className="text-red-600 underline text-xs shrink-0"
+          >
             Retry
           </button>
         </div>

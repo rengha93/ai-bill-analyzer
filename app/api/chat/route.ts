@@ -56,6 +56,11 @@ export async function POST(req: Request) {
       3. If answering a comparison question, reference specific bills by their details.
       4. If the answer cannot be found, politely say so.
       5. Never mention JSON, metadata, vectors, or technical terms.
+      6. Use markdown formatting when it adds clarity:
+        - Bullet points for lists or multiple items
+        - Bold for important numbers or dates
+        - Keep single-fact answers as plain text
+        - Never use markdown for simple one-line answers
     `;
 
     // 6. Stream response
