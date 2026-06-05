@@ -2,7 +2,8 @@
 
 import { google } from '@ai-sdk/google';
 import { generateText, Output } from 'ai'; 
-import { telecomBillSchema } from '@/lib/schema';
+import { telecomBillSchema } from './schema';
+
 
 export async function analyzeBillAction(formData: FormData) {
   try {

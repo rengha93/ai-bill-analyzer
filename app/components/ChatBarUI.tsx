@@ -2,101 +2,42 @@
 
 import { useChat } from "@ai-sdk/react";
 import { DefaultChatTransport } from "ai";
-import { TelecomBillData } from "@/lib/schema";
 import { useEffect, useRef, useState } from "react";
-import { AlertCircle, RotateCcw } from "lucide-react";
+import { AlertCircle, RotateCcw, FileText, CheckCircle } from "lucide-react";
+import ReactMarkdown from "react-markdown";
+
+interface BillItem {
+  billId: string;
+  fileName: string;
+  status: "processing" | "ready" | "error";
+}
 
 interface ChatBarUIProps {
-  billData: TelecomBillData;
-  uploadedFileName: string;
+  bills: BillItem[];
   onReset: () => void;
 }
 
-// Compact bill summary card — rendered as first "message" in chat
-function BillSummaryCard({
-  data,
-  fileName,
-  onReset,
-}: {
-  data: TelecomBillData;
-  fileName: string;
-  onReset: () => void;
-}) {
-  return (
-    <div className="flex justify-end mb-2">
-      <div className="max-w-[85%] bg-slate-900 text-white rounded-2xl rounded-br-none px-5 py-4 text-sm shadow-sm">
-        <div className="flex justify-between items-start mb-3">
-          <div>
-            <p className="text-slate-400 text-xs uppercase tracking-wider mb-1">
-              Bill Analyzed
-            </p>
-            <p className="font-semibold text-base">
-              {data.providerDetails.name}
-            </p>
-            <p className="text-slate-400 text-xs mt-0.5">{fileName}</p>
-          </div>
-          <button
-            onClick={onReset}
-            className="text-slate-400 hover:text-white transition-colors ml-4"
-            title="Upload new bill"
-          >
-            <RotateCcw className="w-4 h-4" />
-          </button>
-        </div>
-        <div className="border-t border-slate-700 pt-3 flex justify-between items-center">
-          <div>
-            <p className="text-slate-400 text-xs">Total Due</p>
-            <p className="text-xl font-bold">
-              ₹{data.financialSummary.totalAmountDue.toFixed(2)}
-            </p>
-          </div>
-          <div className="text-right">
-            <p className="text-slate-400 text-xs">Due Date</p>
-            <p className="text-red-400 font-semibold">
-              {data.billingMetadata.dueDate}
-            </p>
-          </div>
-        </div>
-        <div className="border-t border-slate-700 pt-3 mt-3 grid grid-cols-2 gap-2 text-xs text-slate-300">
-          <div>
-            <span className="text-slate-500">Plan: </span>
-            {data.planDetails.planName}
-          </div>
-          <div>
-            <span className="text-slate-500">Speed: </span>
-            {data.planDetails.speed ?? "N/A"}
-          </div>
-          <div>
-            <span className="text-slate-500">Account: </span>
-            {data.customerInfo.accountNumber}
-          </div>
-          <div>
-            <span className="text-slate-500">Period: </span>
-            {data.billingMetadata.billingPeriod.start} –{" "}
-            {data.billingMetadata.billingPeriod.end}
-          </div>
-        </div>
-      </div>
-    </div>
-  );
-}
-
-export default function ChatBarUI({
-  billData,
-  uploadedFileName,
-  onReset,
-}: ChatBarUIProps) {
+export default function ChatBarUI({ bills, onReset }: ChatBarUIProps) {
   const [localInput, setLocalInput] = useState<string>("");
+
+  const suggestions =
+    bills.length > 1
+      ? [
+          "Compare charges across all my bills",
+          "Which month had the highest bill?",
+          "Have my charges increased over time?",
+          "Show all late payment charges mentioned",
+        ]
+      : [
+          "What is my total amount due?",
+          "When is my payment due?",
+          "Break down my charges",
+          "Are there any late fee charges?",
+        ];
 
   const { messages, sendMessage, status, error, regenerate } = useChat({
     transport: new DefaultChatTransport({
       api: "/api/chat",
-      prepareSendMessagesRequest: ({ messages }) => ({
-        body: {
-          messages,
-          billContext: billData,
-        },
-      }),
     }),
   });
 
@@ -107,34 +48,75 @@ export default function ChatBarUI({
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [messages]);
 
-  const handleCustomSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!localInput.trim() || isLoading) return;
-
-    await sendMessage(
-      { text: localInput },
-      { body: { billContext: billData } },
-    );
-
+  const handleSubmit = async (text: string) => {
+    if (!text.trim() || isLoading) return;
+    await sendMessage({ text });
     setLocalInput("");
+  };
+
+  const handleCustomSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    handleSubmit(localInput);
+    setLocalInput("");
+  };
+
+  const handleSuggestionClick = (suggestion: string) => {
+    handleSubmit(suggestion);
   };
 
   return (
     <div className="flex flex-col h-full">
-      {/* Messages Area — scrollable */}
+      {/* Messages Area */}
       <div className="flex-1 overflow-y-auto px-4 py-6 space-y-4">
-        {/* Bill summary card as first message */}
-        <BillSummaryCard
-          data={billData}
-          fileName={uploadedFileName}
-          onReset={onReset}
-        />
+        {/* Bill list header */}
+        <div className="flex justify-end">
+          <div className="max-w-[85%] bg-slate-900 text-white rounded-2xl rounded-br-none px-5 py-4 text-sm shadow-sm">
+            <div className="flex justify-between items-start mb-3">
+              <div>
+                <p className="text-slate-400 text-xs uppercase tracking-wider mb-1">
+                  {bills.length} Bill{bills.length > 1 ? "s" : ""} Ready
+                </p>
+                <p className="font-semibold text-base">Ask me anything!</p>
+              </div>
+              <button
+                onClick={onReset}
+                className="text-slate-400 hover:text-white transition-colors ml-4"
+                title="Upload new bills"
+              >
+                <RotateCcw className="w-4 h-4" />
+              </button>
+            </div>
+            <div className="border-t border-slate-700 pt-3 flex flex-col gap-2">
+              {bills.map((bill) => (
+                <div key={bill.billId} className="flex items-center gap-2">
+                  <FileText className="w-3 h-3 text-slate-400" />
+                  <span className="text-slate-300 text-xs truncate">
+                    {bill.fileName}
+                  </span>
+                  <CheckCircle className="w-3 h-3 text-green-400 shrink-0 ml-auto" />
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
 
-        {/* Empty state */}
+        {/* Suggested prompts */}
         {messages.length === 0 && (
-          <div className="flex justify-start">
-            <div className="bg-white border border-slate-200 rounded-2xl rounded-bl-none px-4 py-3 text-sm text-slate-500 shadow-sm">
-              Your bill is ready! Ask me anything about it.
+          <div className="flex flex-col gap-3">
+            <p className="text-xs text-slate-400 text-center">
+              Suggested questions
+            </p>
+            <div className="flex flex-wrap gap-2 justify-center">
+              {suggestions.map((s, i) => (
+                <button
+                  key={i}
+                  onClick={() => handleSuggestionClick(s)}
+                  disabled={isLoading}
+                  className="px-4 py-2 bg-white border border-slate-200 hover:border-slate-400 hover:bg-slate-50 rounded-full text-sm text-slate-600 transition-colors"
+                >
+                  {s}
+                </button>
+              ))}
             </div>
           </div>
         )}
@@ -153,7 +135,14 @@ export default function ChatBarUI({
               }`}
             >
               {m.parts?.map((part, i) =>
-                part.type === "text" ? <span key={i}>{part.text}</span> : null,
+                part.type === "text" ? (
+                  <div
+                    key={i}
+                    className="prose prose-sm max-w-none prose-p:my-1 prose-ul:my-1 prose-li:my-0"
+                  >
+                    <ReactMarkdown>{part.text}</ReactMarkdown>
+                  </div>
+                ) : null,
               )}
             </div>
           </div>
@@ -191,7 +180,7 @@ export default function ChatBarUI({
         </div>
       )}
 
-      {/* Input — fixed at bottom */}
+      {/* Input */}
       <div className="border-t border-slate-100 bg-white px-4 py-3">
         <form onSubmit={handleCustomSubmit} className="flex gap-2">
           <input
@@ -199,7 +188,7 @@ export default function ChatBarUI({
             value={localInput}
             onChange={(e) => setLocalInput(e.target.value)}
             disabled={isLoading}
-            placeholder="Ask about this bill..."
+            placeholder="Ask about your bills..."
           />
           <button
             type="submit"
