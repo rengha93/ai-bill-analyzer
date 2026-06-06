@@ -1,9 +1,13 @@
 "use client";
 
-import { useChat } from "@ai-sdk/react";
-import { DefaultChatTransport } from "ai";
 import { useEffect, useRef, useState } from "react";
-import { AlertCircle, RotateCcw, FileText, CheckCircle } from "lucide-react";
+import {
+  AlertCircle,
+  RotateCcw,
+  FileText,
+  CheckCircle,
+  Plus,
+} from "lucide-react";
 import ReactMarkdown from "react-markdown";
 
 interface BillItem {
@@ -15,10 +19,28 @@ interface BillItem {
 interface ChatBarUIProps {
   bills: BillItem[];
   onReset: () => void;
+  onAddFile: (file: File) => void;
+  sessionId: string;
+  messages: any[];
+  sendMessage: any;
+  status: any;
+  error: any;
+  regenerate: any;
 }
 
-export default function ChatBarUI({ bills, onReset }: ChatBarUIProps) {
+export default function ChatBarUI({
+  bills,
+  onReset,
+  onAddFile,
+  sessionId,
+  messages,
+  sendMessage,
+  status,
+  error,
+  regenerate,
+}: ChatBarUIProps) {
   const [localInput, setLocalInput] = useState<string>("");
+  const additionalFileRef = useRef<HTMLInputElement>(null);
 
   const suggestions =
     bills.length > 1
@@ -34,12 +56,6 @@ export default function ChatBarUI({ bills, onReset }: ChatBarUIProps) {
           "Break down my charges",
           "Are there any late fee charges?",
         ];
-
-  const { messages, sendMessage, status, error, regenerate } = useChat({
-    transport: new DefaultChatTransport({
-      api: "/api/chat",
-    }),
-  });
 
   const isLoading = status === "streaming" || status === "submitted";
   const messagesEndRef = useRef<HTMLDivElement>(null);
@@ -62,6 +78,16 @@ export default function ChatBarUI({ bills, onReset }: ChatBarUIProps) {
 
   const handleSuggestionClick = (suggestion: string) => {
     handleSubmit(suggestion);
+  };
+
+  const handleAdditionalFileChange = (
+    e: React.ChangeEvent<HTMLInputElement>,
+  ) => {
+    if (e.target.files) {
+      Array.from(e.target.files).forEach((file) => onAddFile(file));
+      // Reset input so same file can be re-selected
+      e.target.value = "";
+    }
   };
 
   return (
@@ -93,7 +119,17 @@ export default function ChatBarUI({ bills, onReset }: ChatBarUIProps) {
                   <span className="text-slate-300 text-xs truncate">
                     {bill.fileName}
                   </span>
-                  <CheckCircle className="w-3 h-3 text-green-400 shrink-0 ml-auto" />
+                  {bill.status === "processing" && (
+                    <span className="text-blue-400 text-xs shrink-0 ml-auto">
+                      Processing...
+                    </span>
+                  )}
+                  {bill.status === "ready" && (
+                    <CheckCircle className="w-3 h-3 text-green-400 shrink-0 ml-auto" />
+                  )}
+                  {bill.status === "error" && (
+                    <AlertCircle className="w-3 h-3 text-red-400 shrink-0 ml-auto" />
+                  )}
                 </div>
               ))}
             </div>
@@ -134,11 +170,15 @@ export default function ChatBarUI({ bills, onReset }: ChatBarUIProps) {
                   : "bg-white border border-slate-200 text-slate-800 rounded-bl-none"
               }`}
             >
-              {m.parts?.map((part, i) =>
+              {m.parts?.map((part: any, i: any) =>
                 part.type === "text" ? (
                   <div
                     key={i}
-                    className="prose prose-sm max-w-none prose-p:my-1 prose-ul:my-1 prose-li:my-0"
+                    className={
+                      m.role === "user"
+                        ? ""
+                        : "prose prose-sm max-w-none prose-p:my-1 prose-ul:my-1 prose-li:my-0"
+                    }
                   >
                     <ReactMarkdown>{part.text}</ReactMarkdown>
                   </div>
@@ -182,7 +222,27 @@ export default function ChatBarUI({ bills, onReset }: ChatBarUIProps) {
 
       {/* Input */}
       <div className="border-t border-slate-100 bg-white px-4 py-3">
+        {/* Hidden file input */}
+        <input
+          type="file"
+          multiple
+          accept="image/jpeg,image/png,application/pdf"
+          className="hidden"
+          ref={additionalFileRef}
+          onChange={handleAdditionalFileChange}
+        />
+
         <form onSubmit={handleCustomSubmit} className="flex gap-2">
+          {/* + button */}
+          <button
+            type="button"
+            onClick={() => additionalFileRef.current?.click()}
+            className="p-2.5 bg-slate-100 hover:bg-slate-200 rounded-xl transition-colors shrink-0"
+            title="Add more bills"
+          >
+            <Plus className="w-4 h-4 text-slate-600" />
+          </button>
+
           <input
             className="flex-1 px-4 py-2.5 bg-slate-50 border border-slate-300 rounded-xl text-sm focus:outline-none focus:border-slate-400"
             value={localInput}

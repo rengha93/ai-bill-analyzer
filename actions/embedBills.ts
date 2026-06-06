@@ -9,6 +9,7 @@ export async function embedBillAction(formData: FormData) {
   try {
     const file = formData.get("file") as File;
     const billId = formData.get("billId") as string;
+    const sessionId = formData.get("sessionId") as string;
 
     if (!file || !billId) {
       return { success: false, error: "No file or billId provided" };
@@ -30,7 +31,7 @@ export async function embedBillAction(formData: FormData) {
       vectors.push({
         id: `${billId}_chunk_${i}`,
         values: embedding,
-        metadata: { text: chunk, billId },
+        metadata: { text: chunk, billId, sessionId },
       });
     }
 

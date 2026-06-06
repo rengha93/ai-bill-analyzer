@@ -5,7 +5,7 @@ import { embedText } from "@/lib/embedding";
 
 export async function POST(req: Request) {
   try {
-    const { messages } = await req.json();
+    const { messages, sessionId } = await req.json();
 
     // 1. Get the latest question
     const lastUserMessage = messages[messages.length - 1];
@@ -22,11 +22,12 @@ export async function POST(req: Request) {
         vector: queryEmbedding,
         topK: 5,
         includeMetadata: true,
+        filter: sessionId ? { sessionId: { $eq: sessionId } } : undefined,
       };
 
       const queryResponse = await index.query(queryOptions);
 
-      
+
       queryResponse.matches?.forEach((match: any, idx: number) => {
         const score =
           match.score !== undefined
