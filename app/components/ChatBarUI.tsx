@@ -9,6 +9,7 @@ import {
   Plus,
 } from "lucide-react";
 import ReactMarkdown from "react-markdown";
+import remarkGfm from "remark-gfm";
 
 interface BillItem {
   billId: string;
@@ -180,7 +181,7 @@ export default function ChatBarUI({
                         : "prose prose-sm max-w-none prose-p:my-1 prose-ul:my-1 prose-li:my-0"
                     }
                   >
-                    <ReactMarkdown>{part.text}</ReactMarkdown>
+                    <ReactMarkdown remarkPlugins={[remarkGfm]}>{part.text}</ReactMarkdown>
                   </div>
                 ) : null,
               )}
