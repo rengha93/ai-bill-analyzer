@@ -4,6 +4,10 @@ import { index } from "@/lib/pinecone";
 import { chunkText } from "@/lib/chunker";
 import { extractText } from "unpdf";
 import { embedText } from "@/lib/embedding";
+import { google } from "@ai-sdk/google";
+import { telecomBillSchema } from "@/lib/schema";
+import { getDb } from "@/lib/mongodb";
+import { generateObject, generateText, Output } from "ai";
 
 export async function embedBillAction(formData: FormData) {
   try {
@@ -37,7 +41,28 @@ export async function embedBillAction(formData: FormData) {
 
     await index.upsert({ records: vectors });
 
-    return { success: true, billId, totalChunks: chunks.length };
+    //4. Strcutured extraction using generateObjects()
+    const { object: structuredData } = await generateObject({
+      model: google("gemini-2.5-flash"),
+      schema: telecomBillSchema,
+      prompt: `Extract the billing details from the following telecom bill text:\n\n${fullText}`,
+    });
+
+    // 5. Save structured data to MongoDB
+    const db = await getDb();
+    await db.collection("bills").insertOne({
+      billId,
+      sessionId,
+      ...structuredData,
+      createdAt: new Date(),
+    });
+
+    return {
+      success: true,
+      billId,
+      totalChunks: chunks.length,
+      extracted: true,
+    };
   } catch (error) {
     console.error("Embed error:", error);
     return { success: false, error: "Failed to embed bill" };

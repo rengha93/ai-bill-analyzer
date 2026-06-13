@@ -1,4 +1,4 @@
-import { TelecomBillData } from "../_legacy/schema";
+import { TelecomBillData } from "../lib/schema";
 
 export const MOCK_BILL_DATA: TelecomBillData = {
   providerDetails: {
