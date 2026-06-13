@@ -1,4 +1,4 @@
-import { TelecomBillData } from "@/_legacy/schema";
+import { TelecomBillData } from "@/lib/schema";
 
 interface BillDashboardProps {
   data: TelecomBillData;

@@ -30,9 +30,14 @@ export const telecomBillSchema = z.object({
     currentCharges: z.object({
       rental: z.number().describe("Base plan or rental charges before tax"),
       taxes: z.number().describe("Total GST or taxes applied"),
-      otherCharges: z.number().optional().describe("Any late fees, installation fees, or other charges")
+      otherCharges: z.number().optional().describe("Any late fees, installation fees, or other charges"),
+      lineItems: z.array(z.object({
+        description: z.string().describe("Description of the charge, e.g., 'Late Payment Fee' or 'One-time Activation Charge'"),
+        amount: z.number()
+      })).optional().describe("Itemized breakdown of individual charges beyond the base plan/rental and taxes, if listed on the bill")
     }).describe("Breakdown of just this month's specific charges"),
-    totalAmountDue: z.number().describe("The final total amount payable by the due date")
+    totalAmountDue: z.number().describe("The final total amount payable by the due date"),
+    amountAfterDueDate: z.number().optional().describe("Total amount payable if paid after the due date, including late fee, if shown on the bill")
   })
 });
 
