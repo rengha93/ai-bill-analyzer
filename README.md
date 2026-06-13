@@ -10,7 +10,7 @@ An AI-powered telecom bill analysis agent — combining RAG, structured data ext
 
 ### Chat
 
-![Chat Screen](./public/mvp2_chat.png)
+![Chat Screen](./public/mvp3_chat.png)
 
 ## Features
 
